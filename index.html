@@ -1,0 +1,670 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Translation Peer Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: navy masthead, three-step tabs (texts → mark → report); review step = source | translation | score rail */
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#ECEFF4; --ink:#132033; --muted:#566275; --line:#D5DAE3;
+  --navy:#0F2439; --on-navy:#FFFFFF; --on-navy-muted:#B8C4D6;
+  --accent:#1E4E8C; --accent-ink:#FFFFFF;
+  --mt-bg:#F8DCE0; --mt-line:#B3263A; --mc-bg:#FAE9C3; --mc-line:#9A6200; --nt-bg:#DCE7F6; --nt-line:#3B6CB0;
+  --ok:#1D7449; --bad:#B3263A;
+  --display:"Playfair Display", Georgia, "Times New Roman", serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1520; --surface:#152132; --surface-2:#1B2A3F; --ink:#E5EBF3; --muted:#9BA8BB; --line:#2B3B53;
+  --navy:#0A1726; --on-navy:#FFFFFF; --on-navy-muted:#93A3BA;
+  --accent:#8DB4EC; --accent-ink:#0D1520;
+  --mt-bg:#4B1F28; --mt-line:#F08C9A; --mc-bg:#45361A; --mc-line:#E8B85A; --nt-bg:#1D3352; --nt-line:#8DB4EC;
+  --ok:#5CC48F; --bad:#F08C9A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1520; --surface:#152132; --surface-2:#1B2A3F; --ink:#E5EBF3; --muted:#9BA8BB; --line:#2B3B53;
+  --navy:#0A1726; --on-navy:#FFFFFF; --on-navy-muted:#93A3BA;
+  --accent:#8DB4EC; --accent-ink:#0D1520;
+  --mt-bg:#4B1F28; --mt-line:#F08C9A; --mc-bg:#45361A; --mc-line:#E8B85A; --nt-bg:#1D3352; --nt-line:#8DB4EC;
+  --ok:#5CC48F; --bad:#F08C9A; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;font-weight:600}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* masthead */
+.mast{background:var(--navy);color:var(--on-navy)}
+.mast .wrap{padding-block:22px 0;display:grid;gap:14px}
+.mast-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--on-navy-muted);font-weight:600}
+.mast h1{font-size:clamp(26px,3.4vw,36px);line-height:1.15;margin-top:4px}
+.mast p{margin:6px 0 0;color:var(--on-navy-muted);max-width:62ch}
+.lang{display:inline-flex;border:1px solid rgba(255,255,255,.35);border-radius:999px;overflow:hidden}
+.lang button{background:none;border:0;color:var(--on-navy);padding:6px 14px;cursor:pointer;font-weight:600;font-size:14px;letter-spacing:.04em}
+.lang button[aria-pressed="true"]{background:var(--on-navy);color:var(--navy)}
+.tabs{display:flex;gap:4px;overflow-x:auto;margin-top:6px}
+.tab{background:none;border:0;color:var(--on-navy-muted);padding:10px 16px 12px;cursor:pointer;font-weight:600;border-radius:8px 8px 0 0;white-space:nowrap;display:flex;gap:8px;align-items:center}
+.tab .n{font-family:var(--mono);font-size:12px;border:1px solid currentColor;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center}
+.tab[aria-selected="true"]{background:var(--bg);color:var(--ink)}
+
+main .wrap{padding-block:24px 48px}
+.banner{background:var(--nt-bg);border:1px solid var(--nt-line);border-radius:8px;padding:10px 14px;margin-bottom:18px;font-size:15px;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+
+.panel-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+label.f{display:grid;gap:6px;font-weight:600;font-size:14px}
+label.f small{font-weight:400;color:var(--muted)}
+input[type=text],select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:9px 11px;font-weight:400;font-size:16px}
+textarea{resize:vertical;min-height:110px;line-height:1.55}
+.grid-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.grid-texts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+.grid-texts textarea{min-height:280px}
+.count{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:500}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.actions{margin-top:18px}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:8px 14px;cursor:pointer;font-weight:600;font-size:15px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.armed{background:var(--bad);color:var(--surface);border-color:var(--bad)}
+.btn[hidden]{display:none}
+
+/* review */
+.review{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 330px;gap:18px;align-items:start}
+.col h2{font-size:20px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.hint{color:var(--muted);font-size:14px;margin:0 0 12px}
+.text{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;white-space:pre-wrap;word-wrap:break-word;font-size:17px;line-height:1.85;min-height:200px}
+.text.src{background:var(--surface-2);color:var(--ink)}
+#tgt{cursor:text}
+mark.err{color:inherit;border-radius:3px;padding:1px 0;cursor:pointer;border-bottom:2px solid}
+mark.err::after{content:attr(data-label);font-family:var(--mono);font-size:10.5px;font-weight:600;vertical-align:super;line-height:0;margin-left:2px;padding:0 3px;border-radius:3px;user-select:none;-webkit-user-select:none}
+mark.g-t{background:var(--mt-bg);border-color:var(--mt-line)} mark.g-t::after{color:var(--mt-line)}
+mark.g-m{background:var(--mc-bg);border-color:var(--mc-line)} mark.g-m::after{color:var(--mc-line)}
+mark.g-n{background:var(--nt-bg);border-color:var(--nt-line);border-bottom-style:dashed} mark.g-n::after{color:var(--nt-line)}
+mark.err.hot{outline:2px solid var(--accent);outline-offset:1px}
+.empty{color:var(--muted);font-style:italic}
+
+.rail{display:grid;gap:14px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+.score{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.score .big{font-family:var(--display);font-size:46px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}
+.score .unit{color:var(--muted);font-size:14px;margin-left:6px}
+.pill{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid}
+.pill.ok{color:var(--ok);border-color:var(--ok)} .pill.bad{color:var(--bad);border-color:var(--bad)}
+.meter{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden;display:flex;margin:12px 0 6px}
+.meter span{display:block;height:100%}
+.meter .t{background:var(--mt-line)} .meter .m{background:var(--mc-line)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.bk{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:3px;font-size:14px}
+.bk li{display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+.bk code{font-family:var(--mono);font-size:12px;font-weight:600}
+.small{font-size:13px;color:var(--muted)}
+
+.list{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.list h3{font-family:var(--body);font-size:13px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:12px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.list ol{list-style:none;margin:0;padding:0;max-height:min(60vh,560px);overflow:auto}
+.item{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:11px 16px;border-bottom:1px solid var(--line);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0}
+.item:hover,.item.hot{background:var(--surface-2)}
+.item:last-child{border-bottom:0}
+.code{font-family:var(--mono);font-size:12px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;align-self:start}
+.code.g-t{background:var(--mt-bg);color:var(--mt-line)} .code.g-m{background:var(--mc-bg);color:var(--mc-line)} .code.g-n{background:var(--nt-bg);color:var(--nt-line)}
+.item .q{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.item .d{grid-column:2;font-size:14px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.item .d b{color:var(--ink);font-weight:600}
+.item.lost .q{text-decoration:line-through;color:var(--muted)}
+.none{padding:14px 16px;color:var(--muted);font-size:14px;margin:0}
+
+/* floating mark button */
+#fab{position:absolute;z-index:30;background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:8px 16px;font-weight:700;box-shadow:0 4px 14px rgba(10,23,38,.28);cursor:pointer}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(8,16,28,.55);z-index:40;display:grid;place-items:center;padding:16px}
+.modal{background:var(--surface);border-radius:12px;width:min(560px,100%);max-height:calc(100% - 16px);overflow:auto;padding:22px;display:grid;gap:16px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.modal h2{font-size:22px}
+.quote{background:var(--surface-2);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 6px 6px 0;font-style:italic;overflow-wrap:anywhere}
+.pts{display:flex;gap:6px;flex-wrap:wrap}
+.pts label{position:relative}
+.pts input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.pts span{display:inline-grid;place-items:center;min-width:44px;height:38px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+.pts input:checked + span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.pts input:focus-visible + span{outline:2px solid var(--accent);outline-offset:2px}
+.sevdesc,.catdesc{font-size:14px;color:var(--muted);font-weight:400;margin:0}
+.err-msg{color:var(--bad);font-size:14px;margin:0}
+
+/* report */
+.report{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:grid;gap:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+input[type=number]{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:9px 11px;font-size:16px;font-variant-numeric:tabular-nums}
+pre#rep{white-space:pre-wrap;word-wrap:break-word;font-family:var(--body);font-size:15px;line-height:1.6;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;margin:0;max-height:70vh;overflow:auto;user-select:text}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;z-index:60;font-weight:600;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+footer .wrap{padding-block:0 32px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+@media (max-width:1180px){.review{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.rail{grid-column:1/-1;position:static;grid-template-columns:1fr 1fr}}
+@media (max-width:760px){.review,.grid-texts,.report,.two{grid-template-columns:1fr}.rail{grid-template-columns:1fr}.text{font-size:16px;padding:14px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="mast-top">
+      <div>
+        <div class="eyebrow" data-i18n="eyebrow"></div>
+        <h1 data-i18n="appTitle"></h1>
+        <p data-i18n="appSub"></p>
+      </div>
+      <div class="lang" role="group" aria-label="Language / Idioma">
+        <button type="button" id="lang-en" data-lang="en">EN</button>
+        <button type="button" id="lang-es" data-lang="es">ES</button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-texts" data-tab="texts"><span class="n">1</span><span data-i18n="tabTexts"></span></button>
+      <button class="tab" role="tab" id="tab-review" data-tab="review"><span class="n">2</span><span data-i18n="tabReview"></span></button>
+      <button class="tab" role="tab" id="tab-report" data-tab="report"><span class="n">3</span><span data-i18n="tabReport"></span></button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="banner" id="sample-banner" hidden>
+      <span data-i18n="sampleBanner"></span>
+      <button class="btn" type="button" id="banner-go" data-i18n="goTexts"></button>
+    </div>
+
+    <!-- 1 TEXTS -->
+    <section id="p-texts" role="tabpanel" hidden>
+      <div class="panel-card">
+        <div class="grid-meta">
+          <label class="f"><span data-i18n="assignment"></span><input type="text" id="f-title"></label>
+          <label class="f"><span data-i18n="reviewer"></span><input type="text" id="f-reviewer"></label>
+          <label class="f"><span data-i18n="translator"></span><input type="text" id="f-translator"></label>
+          <label class="f"><span data-i18n="direction"></span>
+            <select id="f-dir"><option value="en-es" data-i18n="dirEnEs"></option><option value="es-en" data-i18n="dirEsEn"></option></select>
+          </label>
+        </div>
+        <div class="grid-texts">
+          <label class="f"><span class="row" style="justify-content:space-between"><span data-i18n="source"></span><span class="count" id="c-src"></span></span>
+            <textarea id="f-src" data-i18n-ph="srcPh"></textarea></label>
+          <label class="f"><span class="row" style="justify-content:space-between"><span data-i18n="target"></span><span class="count" id="c-tgt"></span></span>
+            <textarea id="f-tgt" data-i18n-ph="tgtPh"></textarea>
+            <small id="tgt-warn" hidden></small></label>
+        </div>
+        <div class="row actions">
+          <button class="btn primary" type="button" id="go-review" data-i18n="goReview"></button>
+          <button class="btn" type="button" id="open-file" data-i18n="openFile"></button>
+          <input type="file" id="file-in" accept=".json,application/json" hidden>
+          <button class="btn" type="button" id="load-sample" data-i18n="loadSample"></button>
+          <button class="btn danger" type="button" id="new-review" data-i18n="newReview"></button>
+        </div>
+        <p class="small" data-i18n="autosave" style="margin:14px 0 0"></p>
+      </div>
+    </section>
+
+    <!-- 2 REVIEW -->
+    <section id="p-review" role="tabpanel" hidden>
+      <div class="review">
+        <div class="col">
+          <h2><span data-i18n="sourceH"></span><span class="count" id="c-src2"></span></h2>
+          <div class="text src" id="src"></div>
+        </div>
+        <div class="col">
+          <h2><span data-i18n="targetH"></span><span class="count" id="c-tgt2"></span></h2>
+          <p class="hint" data-i18n="selectHint"></p>
+          <div class="text" id="tgt"></div>
+        </div>
+        <aside class="rail">
+          <div class="score" id="score"></div>
+          <div class="list">
+            <h3><span data-i18n="marks"></span> <span id="mark-count"></span></h3>
+            <ol id="errlist"></ol>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- 3 REPORT -->
+    <section id="p-report" role="tabpanel" hidden>
+      <div class="report">
+        <div class="stack">
+          <div class="panel-card stack">
+            <label class="f"><span data-i18n="strengths"></span><textarea id="f-str" data-i18n-ph="strPh"></textarea></label>
+            <label class="f"><span data-i18n="priorities"></span><textarea id="f-pri" data-i18n-ph="priPh"></textarea></label>
+            <label class="f"><span data-i18n="overall"></span><textarea id="f-ov" data-i18n-ph="ovPh"></textarea></label>
+            <div class="two">
+              <label class="f"><span data-i18n="quality"></span><input type="number" id="f-q" min="0" max="3" step="1"><small data-i18n="qualityHelp"></small></label>
+              <label class="f"><span data-i18n="threshold"></span><input type="number" id="f-th" min="1" step="1"><small data-i18n="thresholdHelp"></small></label>
+            </div>
+          </div>
+          <div class="panel-card stack">
+            <div class="row">
+              <button class="btn primary" type="button" id="copy" data-i18n="copy"></button>
+              <button class="btn" type="button" id="dl-html" data-i18n="dlHtml"></button>
+              <button class="btn" type="button" id="dl-json" data-i18n="dlJson"></button>
+            </div>
+            <p class="small" id="dl-note" data-i18n="fileHint" style="margin:0"></p>
+          </div>
+        </div>
+        <div>
+          <h2 style="font-size:20px;margin-bottom:10px" data-i18n="preview"></h2>
+          <pre id="rep"></pre>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer><div class="wrap"><span data-i18n="footer"></span><span data-i18n="scaleNote"></span></div></footer>
+
+<button id="fab" type="button" hidden></button>
+
+<div class="scrim" id="scrim" hidden>
+  <form class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="m-h" novalidate>
+    <h2 id="m-h"></h2>
+    <div class="quote" id="m-quote"></div>
+    <label class="f"><span data-i18n="category"></span>
+      <select id="m-cat"></select>
+      <p class="catdesc" id="m-catdesc"></p>
+    </label>
+    <div class="f" style="display:grid;gap:6px">
+      <span style="font-weight:600;font-size:14px" data-i18n="points"></span>
+      <div class="pts" id="m-pts"></div>
+      <p class="sevdesc" id="m-sevdesc"></p>
+    </div>
+    <label class="f"><span data-i18n="suggestion"></span><input type="text" id="m-sug" data-i18n-ph="sugPh"></label>
+    <label class="f"><span data-i18n="comment"></span><textarea id="m-com" data-i18n-ph="comPh" style="min-height:80px"></textarea></label>
+    <p class="err-msg" id="m-err" hidden></p>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn danger" type="button" id="m-del" data-i18n="del"></button>
+      <span class="row">
+        <button class="btn" type="button" id="m-cancel" data-i18n="cancel"></button>
+        <button class="btn primary" type="submit" data-i18n="save"></button>
+      </span>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const words=s=>(s||'').trim().split(/\s+/).filter(Boolean).length;
+
+/* ---------- i18n ---------- */
+const T={
+en:{eyebrow:'CTIS · Peer review',appTitle:'Translation Peer Review',appSub:'Mark errors in a classmate’s translation with the ATA error categories, write feedback, and share the report.',
+tabTexts:'Texts',tabReview:'Mark errors',tabReport:'Feedback & report',
+assignment:'Assignment',reviewer:'Reviewer (you)',translator:'Translator (your peer)',direction:'Language direction',dirEnEs:'English → Spanish',dirEsEn:'Spanish → English',
+source:'Source text',target:'Translation to review',srcPh:'Paste the source text…',tgtPh:'Paste your peer’s translation…',
+goReview:'Start marking',openFile:'Open review file',loadSample:'Load example',newReview:'Start new review',confirmNew:'Click again to clear everything',
+autosave:'Your work saves in this browser automatically. To share it, use the buttons on the Feedback & report tab.',
+sampleBanner:'This is an example review. Replace the texts to start your own.',goTexts:'Go to Texts',
+sourceH:'Source',targetH:'Translation',words:'words',
+selectHint:'Select a word or phrase in the translation to mark an error. Click a mark to edit it.',
+markBtn:'Mark error',overlap:'That selection overlaps an existing mark. Edit or delete that mark first.',noTarget:'Add a translation on the Texts tab first.',
+modalNew:'Mark an error',modalEdit:'Edit mark',category:'Category',points:'Points',suggestion:'Suggested correction',comment:'Comment for the translator',
+sugPh:'How would you fix it?',comPh:'Explain why this is an error.',save:'Save mark',del:'Delete',cancel:'Cancel',confirmDel:'Click again to delete',pickCat:'Choose a category.',
+grpT:'Meaning transfer',grpM:'Mechanics',choose:'Choose…',
+errPts:'error points',threshold:'Pass threshold',below:'Below threshold',atAbove:'At or above threshold',marks:'Marks',none:'No marks yet. Select text in the translation to add one.',
+lost:'The translation changed and this text is no longer there.',lostWarn:n=>`${n} mark(s) no longer match the translation. They are kept in the list, crossed out.`,
+quality:'Quality points',qualityHelp:'Subtract 1 for each exceptional solution (up to 3).',thresholdHelp:'ATA exam benchmark: under 18 points for a ~250-word passage. Adjust for your assignment.',
+qualityLine:q=>`Quality points subtracted: ${q}`,
+strengths:'Strengths',priorities:'Priorities for revision',overall:'Overall comment',strPh:'What did the translator do well?',priPh:'What should they fix first?',ovPh:'Your overall impression.',
+preview:'Report preview',copy:'Copy report',copied:'Report copied.',copyFail:'Copy is blocked here. The report is selected; press Ctrl/Cmd + C.',
+dlHtml:'Download report (.html)',dlJson:'Save review file (.json)',saved:'File saved.',dlUnavailable:'Downloads are not available in this view. Use Copy report instead.',
+fileHint:'Send the review file to your peer. They can open it on the Texts tab to see your marks in place.',
+opened:'Review file opened.',badFile:'That file is not a review file from this page.',
+reportTitle:'Translation Peer Review',date:'Date',errors:'Errors',score:'Score',sug:'Suggestion',com:'Comment',noneRep:'No errors marked.',
+footer:'Elsa Pérez, PhD · CTIS',scaleNote:'Point scale follows ATA (1, 2, 4, 8, 16). Your instructor’s rubric takes precedence.',noteOnly:'Note only',
+byCat:'By category'},
+es:{eyebrow:'CTIS · Revisión entre pares',appTitle:'Revisión de traducción entre pares',appSub:'Marca los errores en la traducción de tu compañero con las categorías de error de la ATA, escribe tu retroalimentación y comparte el informe.',
+tabTexts:'Textos',tabReview:'Marcar errores',tabReport:'Retroalimentación e informe',
+assignment:'Tarea',reviewer:'Revisor(a) (tú)',translator:'Traductor(a) (tu compañero)',direction:'Dirección',dirEnEs:'Inglés → español',dirEsEn:'Español → inglés',
+source:'Texto original',target:'Traducción que revisas',srcPh:'Pega el texto original…',tgtPh:'Pega la traducción de tu compañero…',
+goReview:'Empezar a marcar',openFile:'Abrir archivo de revisión',loadSample:'Cargar ejemplo',newReview:'Nueva revisión',confirmNew:'Haz clic otra vez para borrar todo',
+autosave:'Tu trabajo se guarda automáticamente en este navegador. Para compartirlo, usa los botones de la pestaña Retroalimentación e informe.',
+sampleBanner:'Esta es una revisión de ejemplo. Reemplaza los textos para empezar la tuya.',goTexts:'Ir a Textos',
+sourceH:'Original',targetH:'Traducción',words:'palabras',
+selectHint:'Selecciona una palabra o frase de la traducción para marcar un error. Haz clic en una marca para editarla.',
+markBtn:'Marcar error',overlap:'La selección se superpone con una marca existente. Edita o borra esa marca primero.',noTarget:'Primero agrega una traducción en la pestaña Textos.',
+modalNew:'Marcar un error',modalEdit:'Editar marca',category:'Categoría',points:'Puntos',suggestion:'Corrección sugerida',comment:'Comentario para el traductor',
+sugPh:'¿Cómo lo corregirías?',comPh:'Explica por qué es un error.',save:'Guardar marca',del:'Borrar',cancel:'Cancelar',confirmDel:'Haz clic otra vez para borrar',pickCat:'Elige una categoría.',
+grpT:'Transferencia del sentido',grpM:'Aspectos formales',choose:'Elige…',
+errPts:'puntos de error',threshold:'Umbral de aprobación',below:'Por debajo del umbral',atAbove:'En el umbral o por encima',marks:'Marcas',none:'Aún no hay marcas. Selecciona texto en la traducción para agregar una.',
+lost:'La traducción cambió y este texto ya no aparece.',lostWarn:n=>`${n} marca(s) ya no coinciden con la traducción. Siguen en la lista, tachadas.`,
+quality:'Puntos de calidad',qualityHelp:'Resta 1 por cada solución excepcional (máximo 3).',thresholdHelp:'Referencia del examen de la ATA: menos de 18 puntos en un pasaje de unas 250 palabras. Ajústalo a tu tarea.',
+qualityLine:q=>`Puntos de calidad restados: ${q}`,
+strengths:'Fortalezas',priorities:'Prioridades de revisión',overall:'Comentario general',strPh:'¿Qué hizo bien el traductor?',priPh:'¿Qué debería corregir primero?',ovPh:'Tu impresión general.',
+preview:'Vista previa del informe',copy:'Copiar informe',copied:'Informe copiado.',copyFail:'Aquí no se puede copiar. El informe está seleccionado; pulsa Ctrl/Cmd + C.',
+dlHtml:'Descargar informe (.html)',dlJson:'Guardar archivo de revisión (.json)',saved:'Archivo guardado.',dlUnavailable:'Las descargas no están disponibles en esta vista. Usa Copiar informe.',
+fileHint:'Envía el archivo de revisión a tu compañero. Puede abrirlo en la pestaña Textos para ver tus marcas en el texto.',
+opened:'Archivo de revisión abierto.',badFile:'Ese archivo no es un archivo de revisión de esta página.',
+reportTitle:'Revisión de traducción entre pares',date:'Fecha',errors:'Errores',score:'Puntuación',sug:'Sugerencia',com:'Comentario',noneRep:'No se marcaron errores.',
+footer:'Elsa Pérez, PhD · CTIS',scaleNote:'La escala de puntos sigue a la ATA (1, 2, 4, 8, 16). La rúbrica de tu profesor tiene prioridad.',noteOnly:'Solo nota',
+byCat:'Por categoría'}
+};
+const CATS=[
+['MT','t','Mistranslation','Traducción errónea','The translation says something different from the source.','La traducción dice algo distinto del original.'],
+['MU','t','Misunderstanding','Comprensión errónea','The source was misread or misinterpreted.','Se leyó o interpretó mal el original.'],
+['A','t','Addition','Adición','Information not in the source was added.','Se agregó información que no está en el original.'],
+['O','t','Omission','Omisión','Information in the source is missing.','Falta información del original.'],
+['T','t','Terminology','Terminología','Wrong term or word choice for the field or context.','Término o selección léxica inadecuada para el campo o contexto.'],
+['R','t','Register','Registro','Formality or tone does not fit the source or audience.','El nivel de formalidad o el tono no corresponde al original o al público.'],
+['F','t','Faithfulness','Fidelidad','The intent or effect of the source is not preserved.','No se conserva la intención o el efecto del original.'],
+['L','t','Literalness','Literalidad','Word-for-word rendering that sounds unnatural or distorts meaning.','Traducción palabra por palabra que suena poco natural o distorsiona el sentido.'],
+['FC','t','False cognate','Falso cognado','A look-alike word with a different meaning.','Palabra parecida con otro significado.'],
+['IND','t','Indecision','Indecisión','Alternatives are offered instead of one choice.','Se ofrecen alternativas en lugar de una sola opción.'],
+['AMB','t','Ambiguity','Ambigüedad','The translation allows a reading the source does not.','La traducción permite una lectura que el original no permite.'],
+['COH','t','Cohesion','Cohesión','Ideas do not connect logically, or references are unclear.','Las ideas no se conectan con lógica o las referencias no son claras.'],
+['ST','t','Style','Estilo','Awkward or inconsistent style for this text type.','Estilo torpe o inconsistente para este tipo de texto.'],
+['G','m','Grammar','Gramática','Agreement, verb forms, tense or mood.','Concordancia, formas verbales, tiempo o modo.'],
+['SYN','m','Syntax','Sintaxis','Word order or sentence structure.','Orden de palabras o estructura de la oración.'],
+['P','m','Punctuation','Puntuación','Missing, extra or incorrect punctuation.','Puntuación que falta, sobra o es incorrecta.'],
+['SP','m','Spelling','Ortografía','Misspelled word.','Palabra mal escrita.'],
+['D','m','Accents & diacritics','Tildes y diacríticos','Missing or wrong accent marks, ñ, ü.','Tildes, ñ o diéresis ausentes o incorrectas.'],
+['C','m','Capitalization','Mayúsculas y minúsculas','Capital letters used against target-language rules.','Mayúsculas que no siguen las normas de la lengua meta.'],
+['WF','m','Word form','Forma de la palabra','Wrong part of speech or derivation.','Categoría gramatical o derivación incorrecta.'],
+['U','m','Usage','Uso','Non-standard or unidiomatic usage.','Uso no estándar o poco idiomático.'],
+['UNF','m','Unfinished','Incompleta','Part of the text was not translated.','Una parte del texto no se tradujo.'],
+['OTH','m','Other','Otro','Any other problem; explain in the comment.','Otro problema; explícalo en el comentario.']
+].map(([code,g,en,es,den,des])=>({code,g,en,es,den,des}));
+const catOf=c=>CATS.find(x=>x.code===c)||CATS[CATS.length-1];
+const PTS=[0,1,2,4,8,16];
+const SEV={
+en:{0:['Note','A comment or suggestion; no points.'],1:['Minor','Barely noticeable; meaning intact.'],2:['Noticeable','Slightly affects meaning or reads awkwardly.'],4:['Significant','Part of a sentence’s meaning is lost or misleading.'],8:['Serious','Key information is wrong or missing.'],16:['Critical','The passage is unusable or could cause harm.']},
+es:{0:['Nota','Comentario o sugerencia; sin puntos.'],1:['Leve','Apenas se nota; el sentido se mantiene.'],2:['Notable','Afecta un poco el sentido o suena torpe.'],4:['Importante','Se pierde o distorsiona parte del sentido de una oración.'],8:['Grave','Información clave incorrecta o ausente.'],16:['Crítico','El pasaje es inutilizable o podría causar daño.']}
+};
+let lang='en';
+try{lang=localStorage.getItem('tpr-lang')||((navigator.language||'').toLowerCase().startsWith('es')?'es':'en')}catch(e){}
+const t=(k,...a)=>{const v=T[lang][k];return typeof v==='function'?v(...a):(v??k)};
+const cname=c=>c[lang];
+
+/* ---------- state ---------- */
+const KEY='tpr-state-v1';
+function blank(){return{v:1,sample:false,meta:{title:'',reviewer:'',translator:'',dir:'en-es',date:new Date().toISOString().slice(0,10)},source:'',target:'',errors:[],quality:0,threshold:18,feedback:{strengths:'',priorities:'',overall:''}}}
+function sample(){
+  const source="Free flu shots will be available at the Riverside Community Health Clinic on Saturday, November 7, from 9 a.m. to 1 p.m. No appointment is necessary, and you do not need insurance.\n\nChildren under 9 who are getting their first flu vaccine may need two doses, given at least four weeks apart. Please bring a list of any medications you take and let the nurse know if you have ever had a serious reaction to a vaccine in the past. Interpreters are available at no cost.";
+  const target="Las vacunas contra la gripe gratis estarán disponibles en la Clínica de Salud Comunitaria Riverside el sábado 7 de Noviembre, de 9 a.m. a 1 p.m. No es necesario hacer cita y usted no necesita aseguranza.\n\nLos niños menores de 9 años que reciben su primera vacuna contra la gripe pueden necesitar dos dosis, administradas por lo menos cuatro semanas aparte. Por favor traiga una lista de los medicamentos que toma e informe a la enfermera si ha tenido una reacción seria a una vacuna. Hay intérpretes disponibles.";
+  const mk=(quote,code,points,suggestion,comment)=>{const start=target.indexOf(quote);return{id:uid(),start,end:start+quote.length,quote,code,points,suggestion,comment}};
+  const s=blank();
+  Object.assign(s,{sample:true,source,target,meta:{title:'Práctica 3 · Aviso de vacunación (ejemplo)',reviewer:'Ana (ejemplo)',translator:'Luis (ejemplo)',dir:'en-es',date:new Date().toISOString().slice(0,10)},
+  errors:[
+    mk('Noviembre','C',1,'noviembre','En español los meses se escriben con minúscula.'),
+    mk('aseguranza','U',1,'seguro médico','«Aseguranza» es un uso regional; en un aviso público conviene «seguro médico».'),
+    mk('por lo menos cuatro semanas aparte','L',2,'con al menos cuatro semanas de diferencia','Calco de «apart»; suena poco natural.'),
+    mk('reacción seria','FC',1,'reacción grave','En contexto médico, «serious» se traduce como «grave».'),
+    mk('a una vacuna','O',2,'a alguna vacuna en el pasado','Falta «ever… in the past».'),
+    mk('Hay intérpretes disponibles.','O',4,'Hay intérpretes disponibles sin costo.','Se omitió «at no cost», que es información clave para el acceso lingüístico.')
+  ],
+  feedback:{strengths:'La traducción es clara y mantiene el registro de un aviso comunitario. Las fechas, horarios y el nombre de la clínica están bien.',priorities:'Coteja cada oración con el original antes de entregar: las dos omisiones están al final de una oración.',overall:'Buen trabajo. Con la corrección de las omisiones, el aviso quedaría listo para publicarse.'}});
+  return s;
+}
+function valid(o){return o&&typeof o==='object'&&typeof o.target==='string'&&typeof o.source==='string'&&Array.isArray(o.errors)&&o.meta}
+function normalize(o){const b=blank();const s=Object.assign(b,o);s.meta=Object.assign(blank().meta,o.meta||{});s.feedback=Object.assign(blank().feedback,o.feedback||{});
+  s.errors=(o.errors||[]).filter(e=>e&&typeof e.quote==='string').map(e=>({id:e.id||uid(),start:+e.start,end:+e.end,quote:e.quote,code:catOf(e.code).code,points:PTS.includes(+e.points)?+e.points:1,suggestion:e.suggestion||'',comment:e.comment||''}));return s}
+let S=null;
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(valid(o))S=normalize(o)}}catch(e){}
+if(!S)S=sample();
+let saveT;function persist(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},250)}
+function touch(){if(S.sample){S.sample=false;$('#sample-banner').hidden=true}persist()}
+
+function reanchor(){
+  S.errors.forEach(e=>{
+    if(e.start>=0&&S.target.slice(e.start,e.end)===e.quote)return;
+    let best=-1,dist=Infinity,i=S.target.indexOf(e.quote);
+    while(i>=0&&e.quote){const d=Math.abs(i-(e.start>=0?e.start:0));if(d<dist){dist=d;best=i}i=S.target.indexOf(e.quote,i+1)}
+    if(best>=0){e.start=best;e.end=best+e.quote.length}else{e.start=-1;e.end=-1}
+  });
+  // drop overlaps created by re-anchoring
+  const placed=S.errors.filter(e=>e.start>=0).sort((a,b)=>a.start-b.start);let last=-1;
+  placed.forEach(e=>{if(e.start<last){e.start=-1;e.end=-1}else last=e.end});
+}
+const sorted=()=>{const a=S.errors.filter(e=>e.start>=0).sort((x,y)=>x.start-y.start);return a.concat(S.errors.filter(e=>e.start<0))};
+function totals(){
+  let raw=0,tp=0,mp=0;const by={};
+  S.errors.forEach(e=>{if(e.start<0)return;raw+=e.points;const c=catOf(e.code);if(c.g==='t')tp+=e.points;else mp+=e.points;
+    by[e.code]=by[e.code]||{n:0,p:0};by[e.code].n++;by[e.code].p+=e.points});
+  const q=Math.max(0,Math.min(3,+S.quality||0));const total=Math.max(0,raw-q);
+  return{raw,total,tp,mp,by,q,pass:total<(+S.threshold||18)}
+}
+
+/* ---------- i18n apply ---------- */
+function applyI18n(){
+  document.documentElement.lang=lang;
+  $$('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n)});
+  $$('[data-i18n-ph]').forEach(el=>{el.placeholder=t(el.dataset.i18nPh)});
+  $('#lang-en').setAttribute('aria-pressed',lang==='en');$('#lang-es').setAttribute('aria-pressed',lang==='es');
+  $('#fab').textContent='＋ '+t('markBtn');
+  buildCatSelect();
+}
+function buildCatSelect(){
+  const sel=$('#m-cat'),cur=sel.value;
+  const grp=g=>`<optgroup label="${esc(t(g==='t'?'grpT':'grpM'))}">`+CATS.filter(c=>c.g===g).map(c=>`<option value="${c.code}">${c.code} — ${esc(cname(c))}</option>`).join('')+'</optgroup>';
+  sel.innerHTML=`<option value="">${esc(t('choose'))}</option>`+grp('t')+grp('m');sel.value=cur;
+}
+
+/* ---------- tabs ---------- */
+let tab='review';
+function showTab(name){tab=name;$$('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===name));
+  ['texts','review','report'].forEach(n=>$('#p-'+n).hidden=n!==name);hideFab();
+  if(name==='review'){renderReview()}if(name==='report'){renderReport()}if(name==='texts'){fillTexts()}}
+$$('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+$('#banner-go').addEventListener('click',()=>showTab('texts'));
+$('#go-review').addEventListener('click',()=>showTab('review'));
+
+/* ---------- texts tab ---------- */
+function fillTexts(){
+  $('#f-title').value=S.meta.title;$('#f-reviewer').value=S.meta.reviewer;$('#f-translator').value=S.meta.translator;$('#f-dir').value=S.meta.dir;
+  $('#f-src').value=S.source;$('#f-tgt').value=S.target;counts();lostWarn();
+}
+function counts(){const a=words(S.source)+' '+t('words'),b=words(S.target)+' '+t('words');$('#c-src').textContent=a;$('#c-tgt').textContent=b;$('#c-src2').textContent=a;$('#c-tgt2').textContent=b}
+function lostWarn(){const n=S.errors.filter(e=>e.start<0).length;const w=$('#tgt-warn');w.hidden=!n;w.textContent=n?t('lostWarn',n):''}
+[['#f-title','title'],['#f-reviewer','reviewer'],['#f-translator','translator']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.meta[k]=e.target.value;touch()}));
+$('#f-dir').addEventListener('change',e=>{S.meta.dir=e.target.value;touch()});
+$('#f-src').addEventListener('input',e=>{S.source=e.target.value;counts();touch()});
+$('#f-tgt').addEventListener('input',e=>{S.target=e.target.value;reanchor();counts();lostWarn();touch()});
+$('#load-sample').addEventListener('click',()=>{S=sample();persist();$('#sample-banner').hidden=false;fillTexts();toast(t('opened'))});
+let armNew;
+$('#new-review').addEventListener('click',e=>{const b=e.currentTarget;
+  if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=t('confirmNew');clearTimeout(armNew);armNew=setTimeout(()=>{b.classList.remove('armed');b.textContent=t('newReview')},4000);return}
+  clearTimeout(armNew);b.classList.remove('armed');b.textContent=t('newReview');
+  S=blank();persist();$('#sample-banner').hidden=true;fillTexts();$('#f-src').focus()});
+$('#open-file').addEventListener('click',()=>$('#file-in').click());
+$('#file-in').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const o=JSON.parse(r.result);if(!valid(o))throw 0;S=normalize(o);S.sample=false;reanchor();persist();$('#sample-banner').hidden=true;fillTexts();toast(t('opened'));showTab('review')}catch(err){toast(t('badFile'))}e.target.value=''};
+  r.readAsText(f)});
+
+/* ---------- review tab ---------- */
+function renderReview(){
+  counts();
+  $('#src').textContent=S.source;
+  const el=$('#tgt');
+  if(!S.target){el.innerHTML=`<span class="empty">${esc(t('noTarget'))}</span>`;el.dataset.empty='1'}
+  else{
+    delete el.dataset.empty;
+    let h='',pos=0;
+    S.errors.filter(e=>e.start>=0).sort((a,b)=>a.start-b.start).forEach(e=>{
+      if(e.start<pos)return;const g=e.points===0?'n':catOf(e.code).g;
+      h+=esc(S.target.slice(pos,e.start))+`<mark class="err g-${g}" data-id="${e.id}" data-label="${e.code}·${e.points}" tabindex="0" title="${esc(cname(catOf(e.code)))}">${esc(S.target.slice(e.start,e.end))}</mark>`;pos=e.end});
+    el.innerHTML=h+esc(S.target.slice(pos));
+  }
+  renderScore();renderList();
+}
+function renderScore(){
+  const x=totals();const sum=x.tp+x.mp||1;
+  const rows=Object.entries(x.by).sort((a,b)=>b[1].p-a[1].p||b[1].n-a[1].n).map(([c,v])=>`<li><span><code>${c}</code> ${esc(cname(catOf(c)))} <span class="small">×${v.n}</span></span><span>${v.p}</span></li>`).join('');
+  $('#score').innerHTML=`
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div><span class="big">${x.total}</span><span class="unit">${esc(t('errPts'))}</span></div>
+      <span class="pill ${x.pass?'ok':'bad'}">${esc(t(x.pass?'below':'atAbove'))}</span>
+    </div>
+    <div class="small" style="margin-top:6px">${esc(t('threshold'))}: ${+S.threshold||18}${x.q?' · '+esc(t('qualityLine',x.q)):''}</div>
+    <div class="meter" aria-hidden="true"><span class="t" style="width:${x.tp/sum*100}%"></span><span class="m" style="width:${x.mp/sum*100}%"></span></div>
+    <div class="legend"><span><i style="background:var(--mt-line)"></i>${esc(t('grpT'))} ${x.tp}</span><span><i style="background:var(--mc-line)"></i>${esc(t('grpM'))} ${x.mp}</span></div>
+    ${rows?`<ul class="bk">${rows}</ul>`:''}`;
+}
+function renderList(){
+  const list=sorted();$('#mark-count').textContent=list.length?`(${list.length})`:'';
+  $('#errlist').innerHTML=list.length?list.map((e,i)=>{const c=catOf(e.code),g=e.points===0?'n':c.g,lost=e.start<0;
+    return `<li><button type="button" class="item${lost?' lost':''}" data-id="${e.id}">
+      <span class="code g-${g}">${e.code}·${e.points}</span>
+      <span class="q">${i+1}. “${esc(e.quote)}”</span>
+      <span class="d">${lost?esc(t('lost'))+'<br>':''}${esc(cname(c))}${e.suggestion?` → <b>${esc(e.suggestion)}</b>`:''}${e.comment?`<br>${esc(e.comment)}`:''}</span>
+    </button></li>`}).join(''):`<p class="none">${esc(t('none'))}</p>`;
+}
+function hot(id,on){$$(`[data-id="${id}"]`).forEach(n=>n.classList.toggle('hot',on))}
+$('#errlist').addEventListener('click',e=>{const b=e.target.closest('.item');if(!b)return;const m=$(`mark[data-id="${b.dataset.id}"]`);if(m)m.scrollIntoView({block:'center',behavior:'smooth'});openModal(S.errors.find(x=>x.id===b.dataset.id))});
+$('#errlist').addEventListener('mouseover',e=>{const b=e.target.closest('.item');$$('.hot').forEach(n=>n.classList.remove('hot'));if(b)hot(b.dataset.id,true)});
+$('#errlist').addEventListener('mouseleave',()=>$$('.hot').forEach(n=>n.classList.remove('hot')));
+$('#tgt').addEventListener('click',e=>{const m=e.target.closest('mark.err');if(!m)return;if(!getSelection().isCollapsed)return;openModal(S.errors.find(x=>x.id===m.dataset.id))});
+$('#tgt').addEventListener('keydown',e=>{const m=e.target.closest('mark.err');if(m&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openModal(S.errors.find(x=>x.id===m.dataset.id))}});
+$('#tgt').addEventListener('mouseover',e=>{const m=e.target.closest('mark.err');$$('.hot').forEach(n=>n.classList.remove('hot'));if(m)hot(m.dataset.id,true)});
+
+/* selection → floating button */
+let pending=null,selT;
+function offsetIn(root,node,off){const r=document.createRange();r.setStart(root,0);r.setEnd(node,off);return r.toString().length}
+function checkSel(){
+  if(tab!=='review'||!$('#scrim').hidden)return hideFab();
+  const sel=getSelection(),tgt=$('#tgt');
+  if(!sel.rangeCount||sel.isCollapsed||tgt.dataset.empty)return hideFab();
+  const r=sel.getRangeAt(0);
+  if(!tgt.contains(r.startContainer)||!tgt.contains(r.endContainer))return hideFab();
+  let s=offsetIn(tgt,r.startContainer,r.startOffset),e=offsetIn(tgt,r.endContainer,r.endOffset);
+  while(s<e&&/\s/.test(S.target[s]))s++;while(e>s&&/\s/.test(S.target[e-1]))e--;
+  if(e<=s)return hideFab();
+  pending={start:s,end:e};
+  const rect=(r.getClientRects().length?r.getClientRects()[r.getClientRects().length-1]:r.getBoundingClientRect());
+  const fab=$('#fab');fab.hidden=false;
+  const w=fab.offsetWidth,vw=document.documentElement.clientWidth;
+  fab.style.left=Math.max(12,Math.min(vw-w-12,rect.right-w/2))+window.scrollX+'px';
+  fab.style.top=rect.bottom+window.scrollY+10+'px';
+}
+function hideFab(){$('#fab').hidden=true}
+document.addEventListener('selectionchange',()=>{clearTimeout(selT);selT=setTimeout(checkSel,140)});
+$('#fab').addEventListener('pointerdown',e=>e.preventDefault());
+$('#fab').addEventListener('mousedown',e=>e.preventDefault());
+$('#fab').addEventListener('click',()=>{
+  if(!pending)return;const {start,end}=pending;
+  if(S.errors.some(x=>x.start>=0&&start<x.end&&end>x.start)){toast(t('overlap'));return}
+  openModal({id:null,start,end,quote:S.target.slice(start,end),code:'',points:1,suggestion:'',comment:''});
+});
+
+/* ---------- modal ---------- */
+let editing=null,lastFocus=null,armDel;
+function buildPts(sel){
+  $('#m-pts').innerHTML=PTS.map(p=>`<label title="${esc(SEV[lang][p][0])}"><input type="radio" name="pts" id="pts-${p}" value="${p}" ${p===sel?'checked':''}><span>${p}</span></label>`).join('');
+  sevDesc();
+}
+function sevDesc(){const p=+(document.querySelector('input[name=pts]:checked')||{}).value||0;const [n,d]=SEV[lang][p];$('#m-sevdesc').innerHTML=`<b>${esc(n)}.</b> ${esc(d)}`}
+function catDesc(){const v=$('#m-cat').value;$('#m-catdesc').textContent=v?(lang==='es'?catOf(v).des:catOf(v).den):''}
+$('#m-pts').addEventListener('change',sevDesc);
+$('#m-cat').addEventListener('change',()=>{catDesc();$('#m-err').hidden=true});
+function openModal(e){
+  if(!e)return;editing=e;lastFocus=document.activeElement;hideFab();
+  $('#m-h').textContent=t(e.id?'modalEdit':'modalNew');
+  $('#m-quote').textContent='“'+e.quote+'”';
+  buildCatSelect();$('#m-cat').value=e.code||'';catDesc();
+  buildPts(e.points);
+  $('#m-sug').value=e.suggestion||'';$('#m-com').value=e.comment||'';
+  $('#m-del').hidden=!e.id;$('#m-del').classList.remove('armed');$('#m-del').textContent=t('del');
+  $('#m-err').hidden=true;$('#scrim').hidden=false;
+  setTimeout(()=>(e.code?$('#m-sug'):$('#m-cat')).focus(),20);
+}
+function closeModal(){$('#scrim').hidden=true;editing=null;if(lastFocus&&lastFocus.focus)lastFocus.focus()}
+$('#m-cancel').addEventListener('click',closeModal);
+$('#scrim').addEventListener('mousedown',e=>{if(e.target.id==='scrim')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#scrim').hidden)closeModal()});
+$('#modal').addEventListener('submit',ev=>{ev.preventDefault();
+  const code=$('#m-cat').value;if(!code){const m=$('#m-err');m.textContent=t('pickCat');m.hidden=false;$('#m-cat').focus();return}
+  const points=+(document.querySelector('input[name=pts]:checked')||{value:1}).value;
+  const data={code,points,suggestion:$('#m-sug').value.trim(),comment:$('#m-com').value.trim()};
+  if(editing.id){Object.assign(S.errors.find(x=>x.id===editing.id),data)}
+  else{S.errors.push(Object.assign({id:uid(),start:editing.start,end:editing.end,quote:editing.quote},data));getSelection().removeAllRanges()}
+  touch();closeModal();renderReview();
+});
+$('#m-del').addEventListener('click',e=>{const b=e.currentTarget;
+  if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent=t('confirmDel');clearTimeout(armDel);armDel=setTimeout(()=>{b.classList.remove('armed');b.textContent=t('del')},4000);return}
+  S.errors=S.errors.filter(x=>x.id!==editing.id);touch();closeModal();renderReview()});
+
+/* ---------- report ---------- */
+[['#f-str','strengths'],['#f-pri','priorities'],['#f-ov','overall']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.feedback[k]=e.target.value;touch();renderRep()}));
+$('#f-q').addEventListener('input',e=>{S.quality=Math.max(0,Math.min(3,parseInt(e.target.value)||0));touch();renderRep()});
+$('#f-th').addEventListener('input',e=>{S.threshold=Math.max(1,parseInt(e.target.value)||18);touch();renderRep()});
+function renderReport(){$('#f-str').value=S.feedback.strengths;$('#f-pri').value=S.feedback.priorities;$('#f-ov').value=S.feedback.overall;$('#f-q').value=S.quality;$('#f-th').value=S.threshold;renderRep()}
+const dirLabel=()=>t(S.meta.dir==='es-en'?'dirEsEn':'dirEnEs');
+function reportText(){
+  const x=totals(),L=[];
+  L.push(t('reportTitle').toUpperCase());
+  if(S.meta.title)L.push(`${t('assignment')}: ${S.meta.title}`);
+  L.push(`${t('reviewer')}: ${S.meta.reviewer||'—'}`);
+  L.push(`${t('translator')}: ${S.meta.translator||'—'}`);
+  L.push(`${t('direction')}: ${dirLabel()}   ·   ${t('date')}: ${S.meta.date}`);
+  L.push('');
+  L.push(`${t('score')}: ${x.total} ${t('errPts')} (${t('threshold')}: ${+S.threshold||18}) — ${t(x.pass?'below':'atAbove')}`);
+  L.push(`${t('grpT')}: ${x.tp}   ·   ${t('grpM')}: ${x.mp}${x.q?'   ·   '+t('qualityLine',x.q):''}`);
+  L.push('');
+  const list=sorted().filter(e=>e.start>=0);
+  L.push(`${t('errors')} (${list.length})`);
+  if(!list.length)L.push(t('noneRep'));
+  list.forEach((e,i)=>{L.push(`${i+1}. [${e.code} · ${e.points}] ${cname(catOf(e.code))}: “${e.quote}”`);
+    if(e.suggestion)L.push(`   ${t('sug')}: ${e.suggestion}`);if(e.comment)L.push(`   ${t('com')}: ${e.comment}`)});
+  [['strengths','strengths'],['priorities','priorities'],['overall','overall']].forEach(([k,f])=>{if(S.feedback[f].trim()){L.push('');L.push(t(k));L.push(S.feedback[f].trim())}});
+  return L.join('\n');
+}
+function renderRep(){$('#rep').textContent=reportText()}
+function reportHtml(){
+  const x=totals(),list=sorted().filter(e=>e.start>=0);let h='',pos=0;
+  const col={t:['#F8DCE0','#B3263A'],m:['#FAE9C3','#9A6200'],n:['#DCE7F6','#3B6CB0']};
+  list.forEach((e,i)=>{const g=e.points===0?'n':catOf(e.code).g;h+=esc(S.target.slice(pos,e.start))+`<mark style="background:${col[g][0]};border-bottom:2px solid ${col[g][1]};color:inherit">${esc(e.quote)}</mark><sup style="color:${col[g][1]};font:600 11px monospace">${i+1}</sup>`;pos=e.end});
+  h+=esc(S.target.slice(pos));
+  const rows=list.map((e,i)=>`<tr><td>${i+1}</td><td><b>${e.code}</b> · ${esc(cname(catOf(e.code)))}</td><td style="text-align:right">${e.points}</td><td>“${esc(e.quote)}”</td><td>${esc(e.suggestion)}</td><td>${esc(e.comment)}</td></tr>`).join('');
+  const fb=['strengths','priorities','overall'].filter(k=>S.feedback[k].trim()).map(k=>`<h2>${esc(t(k))}</h2><p>${esc(S.feedback[k].trim()).replace(/\n/g,'<br>')}</p>`).join('');
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(t('reportTitle'))} — ${esc(S.meta.translator||'')}</title>
+<style>body{font:16px/1.55 "Source Sans 3","Segoe UI",system-ui,sans-serif;color:#132033;max-width:900px;margin:32px auto;padding:0 20px}h1,h2{font-family:"Playfair Display",Georgia,serif;font-weight:600}h1{font-size:28px;margin:0 0 4px}h2{font-size:19px;margin:26px 0 8px}.meta{color:#566275}.score{font-size:20px;margin:18px 0}.txt{white-space:pre-wrap;line-height:1.9;border:1px solid #D5DAE3;border-radius:8px;padding:16px 18px}.src{background:#F4F6F9}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-bottom:1px solid #D5DAE3;padding:7px 8px;text-align:left;vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#566275}footer{margin-top:32px;color:#566275;font-size:13px}</style></head><body>
+<h1>${esc(t('reportTitle'))}</h1>
+<div class="meta">${S.meta.title?esc(S.meta.title)+'<br>':''}${esc(t('reviewer'))}: ${esc(S.meta.reviewer||'—')} · ${esc(t('translator'))}: ${esc(S.meta.translator||'—')}<br>${esc(dirLabel())} · ${esc(t('date'))}: ${esc(S.meta.date)}</div>
+<div class="score"><b>${x.total}</b> ${esc(t('errPts'))} (${esc(t('threshold'))}: ${+S.threshold||18}) — <b>${esc(t(x.pass?'below':'atAbove'))}</b><br><span class="meta" style="font-size:15px">${esc(t('grpT'))}: ${x.tp} · ${esc(t('grpM'))}: ${x.mp}${x.q?' · '+esc(t('qualityLine',x.q)):''}</span></div>
+<h2>${esc(t('sourceH'))}</h2><div class="txt src">${esc(S.source)}</div>
+<h2>${esc(t('targetH'))}</h2><div class="txt">${h}</div>
+<h2>${esc(t('errors'))} (${list.length})</h2>
+${list.length?`<table><thead><tr><th>#</th><th>${esc(t('category'))}</th><th>${esc(t('points'))}</th><th>${esc(t('targetH'))}</th><th>${esc(t('sug'))}</th><th>${esc(t('com'))}</th></tr></thead><tbody>${rows}</tbody></table>`:`<p>${esc(t('noneRep'))}</p>`}
+${fb}
+<footer>${esc(t('footer'))} · ${esc(t('scaleNote'))}</footer></body></html>`;
+}
+$('#copy').addEventListener('click',()=>{const txt=reportText();
+  const fallback=()=>{const r=document.createRange();r.selectNodeContents($('#rep'));const s=getSelection();s.removeAllRanges();s.addRange(r);toast(t('copyFail'))};
+  try{navigator.clipboard.writeText(txt).then(()=>toast(t('copied')),fallback)}catch(e){fallback()}});
+const slug=s=>(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'review';
+let downloads=null;
+async function save(filename,data){
+  if(!downloads){toast(t('dlUnavailable'));return}
+  try{await downloads.save({filename,data});toast(t('saved'))}catch(err){const c=err&&err.code;if(c==='declined')return;if(c==='rate_limited')return;toast(t('dlUnavailable'))}
+}
+$('#dl-html').addEventListener('click',()=>save(`peer-review-${slug(S.meta.translator)}.html`,reportHtml()));
+$('#dl-json').addEventListener('click',()=>{const o=Object.assign({},S,{sample:false,app:'translation-peer-review'});save(`peer-review-${slug(S.meta.translator)}.json`,JSON.stringify(o,null,2))});
+(async()=>{try{downloads=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){downloads=null}
+  if(!downloads){$('#dl-html').hidden=true;$('#dl-json').hidden=true;$('#dl-note').textContent=t('dlUnavailable')}})();
+
+/* ---------- misc ---------- */
+let toastT;function toast(m){const el=$('#toast');el.textContent=m;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,3200)}
+$$('.lang button').forEach(b=>b.addEventListener('click',()=>{lang=b.dataset.lang;try{localStorage.setItem('tpr-lang',lang)}catch(e){}applyI18n();showTab(tab);
+  if(!downloads&&$('#dl-html').hidden)$('#dl-note').textContent=t('dlUnavailable')}));
+
+reanchor();
+$('#sample-banner').hidden=!S.sample;
+applyI18n();
+showTab('review');
+})();
+</script>
+
+</body></html>
